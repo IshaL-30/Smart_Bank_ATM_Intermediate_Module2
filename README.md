@@ -30,15 +30,19 @@ SmartBank ATM is designed to simulate a traditional ATM experience using Ethereu
 ### Running the Project
 
 1. **Open a terminal and start the Hardhat local Ethereum node:**
+   
 ```npx hardhat node```
 
 2. **Open a second terminal and deploy the smart contract to the local network:**
+   
 ```npx hardhat run --network localhost scripts/deploy.js```
 
 3. **Open a third terminal and start the front-end development server:**
+   
 ```npm run dev```
 
 4. **Visit the application in your browser:**
+   
 ```Open http://localhost:3000 to interact with the SmartBank ATM.```
 
 **Connect your MetaMask wallet to the application.**
