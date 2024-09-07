@@ -6,6 +6,7 @@ pragma solidity ^0.8.9;
 contract Assessment {
     address payable public owner;
     uint256 public balance;
+    uint256 public withdrawLimit;
 
     // Structure to store transaction details
     struct Transaction {
@@ -77,6 +78,7 @@ contract Assessment {
 
     function withdraw(uint256 _withdrawAmount) public {
         require(msg.sender == owner, "You are not the owner of this account");
+        require(_withdrawAmount <= withdrawLimit, "Withdrawal amount exceeds the limit");
         uint256 initialGas = gasleft();
         uint _previousBalance = balance;
         if (balance < _withdrawAmount) {
@@ -107,6 +109,11 @@ contract Assessment {
 
         // emit the event
         emit Withdraw(_withdrawAmount, _usedGas);
+    }
+
+    function setWithdrawLimit(uint256 _limit) public {
+        require(msg.sender == owner, "You are not the owner of this account");
+        withdrawLimit = _limit;
     }
 
     // Function to set up multiple auto-withdrawals

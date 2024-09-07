@@ -17,8 +17,9 @@ export default function HomePage() {
   const [recipient, setRecipient] = useState("");
   const [amount, setAmount] = useState("");
   const [interval, setInterval] = useState("");
+  const [withdraw_Limit, setWithdraw_Limit] = useState("");
 
-  const contractAddress = "0x9A676e781A523b5d0C0e43731313A708CB607508";
+  const contractAddress = "0x5FbDB2315678afecb367f032d93F642f64180aa3";
   const atmABI = atm_abi.abi;
 
   const getWallet = async() => {
@@ -86,15 +87,42 @@ export default function HomePage() {
 
   const withdraw = async() => {
     if (atm && withdrawAmount) {
-      let value = withdrawAmount.toString();
-      let tx = await atm.withdraw(ethers.utils.parseEther(value));
-      let receipt = await tx.wait();
-      let used_gas = receipt.gasUsed.toNumber(); 
+      try {
+        let value = withdrawAmount.toString();
+        let tx = await atm.withdraw(ethers.utils.parseEther(value));
+        let receipt = await tx.wait();
+        let used_gas = receipt.gasUsed.toNumber();
+  
+        setTotalGas(total_gas => total_gas + used_gas);
+        setWithdrawAmount("");
+        getBalance();
+        transactionHistory();
+      } 
+      catch (error) {
+        console.error("Transaction error:", error);
+  
+        // Check if the error message matches the withdrawal limit exceeded error
+        if (error.data?.message.includes("Withdrawal amount exceeds the limit")) {
+          alert("The withdrawal amount exceeds the set limit. Please try a smaller amount.");
+        } else {
+          alert("Transaction failed. Please check your input or try again.");
+        }
+      }
+    }
+  };
 
-      setTotalGas(total_gas => total_gas + used_gas);
-      setWithdrawAmount("");
-      getBalance();
-      transactionHistory();
+  const setWithdrawLimitFunc = async () => {
+    if (atm && withdraw_Limit) {
+        try {
+            let value = withdraw_Limit.toString();
+            let tx = await atm.setWithdrawLimit(ethers.utils.parseEther(value));
+            await tx.wait();
+            setWithdraw_Limit("");
+            alert("Withdrawal limit set successfully!");
+        } catch (error) {
+            console.error("Error setting withdrawal limit:", error);
+            alert("Failed to set withdrawal limit");
+        }
     }
   };
 
@@ -124,13 +152,19 @@ export default function HomePage() {
 
   const executeAutoWithdraws = async () => {
     if (atm) {
-      let tx = await atm.executeAutoWithdraws({gasLimit: 10000000});
-      let receipt = await tx.wait();
-      let used_gas = receipt.gasUsed.toNumber(); 
-      setTotalGas(total_gas => total_gas + used_gas);
-      getBalance();
-      transactionHistory();
-      getAutoWithdraws();
+      try {
+        console.log('Executing auto withdraws...');
+        let tx = await atm.executeAutoWithdraws({ gasLimit: 10000000 });
+        let receipt = await tx.wait();
+        let used_gas = receipt.gasUsed.toNumber();
+        console.log('Used gas:', used_gas);
+        setTotalGas(total_gas => total_gas + used_gas);
+        getBalance();
+        transactionHistory();
+        getAutoWithdraws();
+      } catch (error) {
+        console.error('Error executing auto withdraws:', error);
+      }
     }
   };
 
@@ -202,6 +236,17 @@ export default function HomePage() {
         <div style={styles.column}>
           <div style={styles.column1}>
             <div style={styles.recur_payment}>
+            <p>Withdraw Limit</p>
+              <input
+                type="number"
+                placeholder="Amount(ETH)"
+                value={withdraw_Limit}
+                onChange={(e) => setWithdraw_Limit(e.target.value)}
+                style={styles.input_r}
+              />
+              <button onClick={setWithdrawLimitFunc} style={styles.button}>
+                Set Withdraw Limit
+              </button>
               <p>Set Auto Withdraw</p>
               <input
                 type="text"
